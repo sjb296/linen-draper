@@ -153,10 +153,25 @@ sudo -u "${APP_USER}" "${UV}" sync --frozen
 log "Running database migrations..."
 sudo -u "${APP_USER}" "${UV}" run reflex db migrate
 
-# ── Build Frontend ───────────────────────────────────────────────────────────
+# ── Frontend Artifacts ────────────────────────────────────────────────────────
 
-log "Building production frontend (this may take a while)..."
-API_URL="https://${DOMAIN}" sudo -u "${APP_USER}" "${UV}" run reflex export --frontend-only
+# The production frontend build is memory-hungry and may OOM on small VPS.
+# Build artifacts locally on your workstation and rsync them to the server:
+#
+#   On your local machine:
+#     API_URL="https://${DOMAIN}" uv run reflex export
+#     rsync -az frontend.zip backend.zip ${DOMAIN}:~/
+#
+#   Then re-run this script.
+
+if [ -f "${APP_DIR}/frontend.zip" ] && [ -f "${APP_DIR}/backend.zip" ]; then
+    log "Extracting pre-built artifacts..."
+    sudo -u "${APP_USER}" unzip -o "${APP_DIR}/frontend.zip" -d "${APP_DIR}/" 2>/dev/null || \
+        sudo -u "${APP_USER}" python3 -m zipfile -e "${APP_DIR}/frontend.zip" "${APP_DIR}/"
+    sudo -u "${APP_USER}" unzip -o "${APP_DIR}/backend.zip" -d "${APP_DIR}/" 2>/dev/null || \
+        sudo -u "${APP_USER}" python3 -m zipfile -e "${APP_DIR}/backend.zip" "${APP_DIR}/"
+fi
+
 
 # ── Systemd Service ──────────────────────────────────────────────────────────
 
