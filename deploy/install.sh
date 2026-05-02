@@ -37,12 +37,24 @@ if [ "$(id -u)" -ne 0 ]; then
     err "This script must be run as root (or with sudo)."
 fi
 
-command -v uv >/dev/null 2>&1 || {
-    warn "Installing uv..."
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    export PATH="$HOME/.local/bin:$PATH"
-    source $HOME/.local/bin/env
-}
+UV_INSTALL_DIR="/usr/local/bin"
+
+if [ ! -x "${UV_INSTALL_DIR}/uv" ]; then
+    warn "Installing uv to ${UV_INSTALL_DIR}..."
+    curl -LsSf https://astral.sh/uv/install.sh \
+        | env UV_INSTALL_DIR="${UV_INSTALL_DIR}" sh
+fi
+
+# Verify uv is findable
+UV="${UV_INSTALL_DIR}/uv"
+if [ ! -x "$UV" ]; then
+    # Fallback: check if it installed to root's home despite our env var
+    if [ -x "/root/.local/bin/uv" ]; then
+        UV="/root/.local/bin/uv"
+    else
+        err "uv not found at ${UV}. Install failed."
+    fi
+fi
 
 command -v docker >/dev/null 2>&1 || {
     warn "Installing Docker..."
@@ -74,16 +86,12 @@ fi
 log "Setting up application directory..."
 mkdir -p "${APP_DIR}" /etc/"${APP_NAME}"
 
-# Copy the current directory contents to the app dir (if running from the repo)
-# In production, you'd clone the repo. For a fresh clone:
-# git clone https://github.com/sam/linen-draper.git "${APP_DIR}"
-
 if [ -f pyproject.toml ]; then
-    log "Copying project files from current directory to ${APP_DIR}..."
+    log "Copying project files to ${APP_DIR}..."
     rsync -a --exclude '.git' --exclude '.venv' --exclude '__pycache__' \
         --exclude '*.pyc' --exclude '.web' --exclude '.states' \
         --exclude 'frontend.zip' --exclude 'backend.zip' \
-        --exclude 'reflex.db' --exclude '.emails' \
+        --exclude 'reflex.db' --exclude '.emails' --exclude '.pytest_cache' \
         ./ "${APP_DIR}/"
 fi
 
@@ -91,50 +99,69 @@ chown -R "${APP_USER}:${APP_USER}" "${APP_DIR}"
 
 # ── Environment File ─────────────────────────────────────────────────────────
 
-log "Creating environment file..."
-if [ ! -f "${ENV_FILE}" ]; then
-    cat > "${ENV_FILE}" <<'EOF'
+log "Configuring production settings..."
+echo ""
+
+read -p "  SMTP host (e.g. smtp.gmail.com): " SMTP_HOST
+SMTP_HOST="${SMTP_HOST:-smtp.example.com}"
+
+read -p "  SMTP port [587]: " SMTP_PORT
+SMTP_PORT="${SMTP_PORT:-587}"
+
+read -p "  SMTP username: " SMTP_USER
+SMTP_USER="${SMTP_USER:-your-smtp-user}"
+
+read -s -p "  SMTP password: " SMTP_PASSWORD
+echo ""
+SMTP_PASSWORD="${SMTP_PASSWORD:-your-smtp-password}"
+
+read -p "  SMTP from address (e.g. noreply@${DOMAIN}): " SMTP_FROM
+SMTP_FROM="${SMTP_FROM:-noreply@${DOMAIN}}"
+
+read -p "  Anubis PoW difficulty [4]: " ANUBIS_DIFFICULTY
+ANUBIS_DIFFICULTY="${ANUBIS_DIFFICULTY:-4}"
+
+echo ""
+log "Writing environment file to ${ENV_FILE}..."
+cat > "${ENV_FILE}" <<EOF
 # Linen Draper Production Environment
 APP_ENV=production
 LINEN_DRAPER_ENV=production
 
-# SMTP Configuration (required for production email sending)
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=your-smtp-user
-SMTP_PASSWORD=your-smtp-password
-SMTP_FROM=noreply@example.com
+# SMTP Configuration
+SMTP_HOST=${SMTP_HOST}
+SMTP_PORT=${SMTP_PORT}
+SMTP_USER=${SMTP_USER}
+SMTP_PASSWORD=${SMTP_PASSWORD}
+SMTP_FROM=${SMTP_FROM}
 
-# Browser-accessible backend URL (must match Caddy domain)
-API_URL=https://DOMAIN_PLACEHOLDER
+# Browser-accessible backend URL
+API_URL=https://${DOMAIN}
 EOF
-    sed -i "s/DOMAIN_PLACEHOLDER/${DOMAIN}/g" "${ENV_FILE}"
-    warn "Please edit ${ENV_FILE} with your SMTP credentials before starting."
-fi
 
 chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
 chmod 600 "${ENV_FILE}"
 
 # ── Install Dependencies ─────────────────────────────────────────────────────
 
-log "Installing Python dependencies..."
+log "Installing Python dependencies (this may take a while)..."
 cd "${APP_DIR}"
-sudo -u "${APP_USER}" uv sync --frozen
+sudo -u "${APP_USER}" "${UV}" sync --frozen
 
 # ── Database Migration ───────────────────────────────────────────────────────
 
 log "Running database migrations..."
-sudo -u "${APP_USER}" uv run reflex db migrate
+sudo -u "${APP_USER}" "${UV}" run reflex db migrate
 
 # ── Build Frontend ───────────────────────────────────────────────────────────
 
-log "Building production frontend..."
-API_URL="https://${DOMAIN}" sudo -u "${APP_USER}" uv run reflex export --frontend-only
+log "Building production frontend (this may take a while)..."
+API_URL="https://${DOMAIN}" sudo -u "${APP_USER}" "${UV}" run reflex export --frontend-only
 
 # ── Systemd Service ──────────────────────────────────────────────────────────
 
 log "Installing systemd service..."
-cp deploy/linen-draper.service /etc/systemd/system/
+cp "${APP_DIR}/deploy/linen-draper.service" /etc/systemd/system/
 sed -i "s|/opt/linen-draper|${APP_DIR}|g" /etc/systemd/system/linen-draper.service
 sed -i "s|/etc/linen-draper/env|${ENV_FILE}|g" /etc/systemd/system/linen-draper.service
 systemctl daemon-reload
@@ -142,16 +169,15 @@ systemctl enable linen-draper.service
 
 # ── Anubis Container ─────────────────────────────────────────────────────────
 
-log "Setting up Anubis proof-of-work filter..."
+log "Pulling Anubis proof-of-work filter container..."
 docker pull ghcr.io/xe/anubis:latest 2>/dev/null || \
-    docker pull ghcr.io/xe/anubis:latest || \
     warn "Could not pull Anubis image. Skipping container setup."
 
 # ── Caddy Configuration ──────────────────────────────────────────────────────
 
 log "Configuring Caddy..."
 CADDYFILE="/etc/caddy/Caddyfile.${APP_NAME}"
-cp deploy/Caddyfile "${CADDYFILE}"
+cp "${APP_DIR}/deploy/Caddyfile" "${CADDYFILE}"
 sed -i "s/linen-draper.example.com/${DOMAIN}/g" "${CADDYFILE}"
 
 if ! grep -q "import ${CADDYFILE}" /etc/caddy/Caddyfile 2>/dev/null; then
@@ -161,10 +187,9 @@ fi
 # ── Start Everything ─────────────────────────────────────────────────────────
 
 log "Starting services..."
-systemctl restart caddy
+systemctl reload caddy
 systemctl start linen-draper.service
 
-# Start Anubis container
 docker rm -f anubis 2>/dev/null || true
 docker run -d \
     --name anubis \
@@ -172,7 +197,7 @@ docker run -d \
     --net=host \
     -e ANUBIS_TARGET="http://localhost:3000" \
     -e ANUBIS_BIND=":8080" \
-    -e ANUBIS_DIFFICULTY=4 \
+    -e ANUBIS_DIFFICULTY="${ANUBIS_DIFFICULTY}" \
     ghcr.io/xe/anubis:latest
 
 log ""
@@ -180,10 +205,9 @@ log "============================================================"
 log "Deployment complete!"
 log ""
 log "Next steps:"
-log "  1. Edit ${ENV_FILE} with your SMTP credentials"
-log "  2. Register an account: https://${DOMAIN}/register"
-log "  3. Check status:  systemctl status linen-draper"
-log "  4. View logs:     journalctl -u linen-draper -f"
-log "  5. Caddy logs:    journalctl -u caddy -f"
-log "  6. Anubis logs:   docker logs -f anubis"
+log "  1. Register an account: https://${DOMAIN}/register"
+log "  2. Check status:  systemctl status linen-draper"
+log "  3. View logs:     journalctl -u linen-draper -f"
+log "  4. Caddy logs:    journalctl -u caddy -f"
+log "  5. Anubis logs:   docker logs -f anubis"
 log "============================================================"
