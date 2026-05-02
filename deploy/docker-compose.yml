@@ -4,6 +4,9 @@
 # It requires a proof-of-work challenge before serving pages to unauthenticated clients.
 # API/WebSocket paths bypass Anubis entirely (they use Reflex's own authentication).
 #
+# Image: ghcr.io/techarohq/anubis (TecharoHQ fork)
+# Docs:  https://anubis.techaro.lol
+#
 # Start manually:
 #   docker compose -f deploy/docker-compose.yml up -d
 #
@@ -11,22 +14,24 @@
 
 services:
   anubis:
-    image: ghcr.io/xe/anubis:latest
+    image: ghcr.io/techarohq/anubis:main
     container_name: anubis
     restart: unless-stopped
     network_mode: host
     environment:
-      # Target: the Reflex frontend that serves initial HTML pages
-      ANUBIS_TARGET: "http://localhost:3000"
       # Bind: port Anubis listens on (Caddy reverse proxies to this)
-      ANUBIS_BIND: ":8080"
-      # Difficulty: proof-of-work challenge complexity (higher = harder for bots)
+      BIND: ":8080"
+      # Target: the Reflex frontend that serves initial HTML pages
+      TARGET: "http://localhost:3000"
+      # Difficulty: proof-of-work challenge complexity
       # Range: 0 (easy) to 10000 (hard), default is 4
-      ANUBIS_DIFFICULTY: "4"
-      # Metrics: optional Prometheus metrics endpoint
-      # ANUBIS_METRICS_BIND: ":9090"
-      # Cookie name for the proof-of-work token
-      # ANUBIS_COOKIE_NAME: "anubis-token"
+      DIFFICULTY: "4"
+      # Cookie: mark the Anubis token as secure (HTTPS only)
+      COOKIE_SECURE: "true"
+      # Bare metal: read client IP from network (needed without Docker proxy)
+      USE_REMOTE_ADDRESS: "true"
+      # Optional: metrics endpoint
+      # METRICS_BIND: ":9090"
     logging:
       driver: "json-file"
       options:

@@ -185,7 +185,7 @@ systemctl enable linen-draper.service
 # ── Anubis Container ─────────────────────────────────────────────────────────
 
 log "Pulling Anubis proof-of-work filter container..."
-docker pull ghcr.io/xe/anubis:latest 2>/dev/null || \
+docker pull ghcr.io/techarohq/anubis:main 2>/dev/null || \
     warn "Could not pull Anubis image. Skipping container setup."
 
 # ── Caddy Configuration ──────────────────────────────────────────────────────
@@ -210,10 +210,12 @@ docker run -d \
     --name anubis \
     --restart unless-stopped \
     --net=host \
-    -e ANUBIS_TARGET="http://localhost:3000" \
-    -e ANUBIS_BIND=":8080" \
-    -e ANUBIS_DIFFICULTY="${ANUBIS_DIFFICULTY}" \
-    ghcr.io/xe/anubis:latest
+    -e BIND=":8080" \
+    -e TARGET="http://localhost:3000" \
+    -e DIFFICULTY="${ANUBIS_DIFFICULTY}" \
+    -e COOKIE_SECURE="true" \
+    -e USE_REMOTE_ADDRESS="true" \
+    ghcr.io/techarohq/anubis:main
 
 log ""
 log "============================================================"
