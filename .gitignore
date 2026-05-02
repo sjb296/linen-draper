@@ -4,3 +4,5 @@ __pycache__/
 .web
 .states
 assets/external/
+.emails/
+.env
