@@ -6,6 +6,8 @@ import reflex_local_auth
 from dotenv import load_dotenv
 
 from linen_draper.emailer import send_daily_digest
+from linen_draper.pages.dashboard import dashboard_page  # noqa: F401
+from linen_draper.pages.settings import settings_page  # noqa: F401
 from linen_draper.scraper import scrape_and_store
 
 load_dotenv()
