@@ -1,0 +1,44 @@
+# Linen Draper Caddy Configuration
+#
+# Route architecture:
+#   API/WebSocket paths -> Reflex backend (:8000) directly
+#   All other requests   -> Anubis (:8080) -> Reflex frontend (:3000)
+
+linen-draper.example.com {
+    # API and WebSocket endpoints (bypass Anubis - use Reflex authentication)
+    handle /_event* {
+        reverse_proxy localhost:8000
+    }
+    handle /ping {
+        reverse_proxy localhost:8000
+    }
+    handle /_upload* {
+        reverse_proxy localhost:8000
+    }
+    handle /_health {
+        reverse_proxy localhost:8000
+    }
+
+    # Frontend - through Anubis for PoW bot protection
+    handle {
+        reverse_proxy localhost:8080 {
+            header_up Host {http.reverse_proxy.upstream.hostport}
+        }
+    }
+
+    # Enable gzip compression
+    encode gzip zstd
+
+    # Security headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Logging
+    log {
+        output file /var/log/caddy/linen-draper.log
+        format json
+    }
+}

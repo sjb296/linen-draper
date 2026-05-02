@@ -1,0 +1,34 @@
+# Linen Draper - Anubis Proof-of-Work Filter
+#
+# Anubis sits between Caddy and the Reflex frontend.
+# It requires a proof-of-work challenge before serving pages to unauthenticated clients.
+# API/WebSocket paths bypass Anubis entirely (they use Reflex's own authentication).
+#
+# Start manually:
+#   docker compose -f deploy/docker-compose.yml up -d
+#
+# Or use the install.sh script which handles this automatically.
+
+services:
+  anubis:
+    image: ghcr.io/xe/anubis:latest
+    container_name: anubis
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      # Target: the Reflex frontend that serves initial HTML pages
+      ANUBIS_TARGET: "http://localhost:3000"
+      # Bind: port Anubis listens on (Caddy reverse proxies to this)
+      ANUBIS_BIND: ":8080"
+      # Difficulty: proof-of-work challenge complexity (higher = harder for bots)
+      # Range: 0 (easy) to 10000 (hard), default is 4
+      ANUBIS_DIFFICULTY: "4"
+      # Metrics: optional Prometheus metrics endpoint
+      # ANUBIS_METRICS_BIND: ":9090"
+      # Cookie name for the proof-of-work token
+      # ANUBIS_COOKIE_NAME: "anubis-token"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

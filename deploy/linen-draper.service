@@ -1,0 +1,28 @@
+[Unit]
+Description=Linen Draper - Arch Linux Intervention Alert Dashboard
+After=network.target docker.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=linen-draper
+Group=linen-draper
+WorkingDirectory=/opt/linen-draper
+EnvironmentFile=/etc/linen-draper/env
+ExecStart=/root/.local/bin/uv run reflex run --env prod --backend-host 127.0.0.1 --backend-port 8000 --frontend-port 3000
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=linen-draper
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/linen-draper /var/log
+ReadOnlyPaths=/etc/linen-draper/env
+
+[Install]
+WantedBy=multi-user.target
