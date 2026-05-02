@@ -21,7 +21,7 @@ services:
     environment:
       # Bind: port Anubis listens on (Caddy reverse proxies to this)
       BIND: ":8080"
-      # Target: the Reflex frontend that serves initial HTML pages
+      # Target: Reflex production (serves frontend + backend on single port)
       TARGET: "http://localhost:3000"
       # Difficulty: proof-of-work challenge complexity
       # Range: 0 (easy) to 10000 (hard), default is 4

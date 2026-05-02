@@ -10,7 +10,7 @@ Group=linen-draper
 WorkingDirectory=/opt/linen-draper
 EnvironmentFile=/etc/linen-draper/env
 Environment=UV_CACHE_DIR=/opt/linen-draper/.uv-cache
-ExecStart=/usr/local/bin/uv run reflex run --env prod --backend-host 127.0.0.1 --backend-port 8000 --frontend-port 3000
+ExecStart=/usr/local/bin/uv run reflex run --env prod --backend-host 127.0.0.1 --backend-port 3000
 Restart=always
 RestartSec=10
 StandardOutput=journal

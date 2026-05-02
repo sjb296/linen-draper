@@ -1,22 +1,23 @@
 # Linen Draper Caddy Configuration
 #
 # Route architecture:
-#   API/WebSocket paths -> Reflex backend (:8000) directly
-#   All other requests   -> Anubis (:8080) -> Reflex frontend (:3000)
+#   API/WebSocket paths -> Reflex (:3000) directly
+#   All other requests   -> Anubis (:8080) -> Reflex (:3000)
+#   Reflex serves both frontend and backend on a single port in production.
 
 linen-draper.example.com {
     # API and WebSocket endpoints (bypass Anubis - use Reflex authentication)
     handle /_event* {
-        reverse_proxy localhost:8000
+        reverse_proxy localhost:3000
     }
     handle /ping {
-        reverse_proxy localhost:8000
+        reverse_proxy localhost:3000
     }
     handle /_upload* {
-        reverse_proxy localhost:8000
+        reverse_proxy localhost:3000
     }
     handle /_health {
-        reverse_proxy localhost:8000
+        reverse_proxy localhost:3000
     }
 
     # Frontend - through Anubis for PoW bot protection
