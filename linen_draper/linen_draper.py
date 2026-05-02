@@ -19,16 +19,22 @@ logger = logging.getLogger(__name__)
 
 
 async def background_scrape_loop():
-    while True:
-        try:
-            await scrape_and_store()
-        except Exception as e:
-            logger.error(f"Scrape failed: {e}")
-        try:
-            await send_daily_digest()
-        except Exception as e:
-            logger.error(f"Daily digest failed: {e}")
-        await asyncio.sleep(6 * 3600)
+    scrape_interval = 6 * 3600
+    try:
+        while True:
+            try:
+                await scrape_and_store()
+            except Exception as e:
+                logger.error(f"Scrape failed: {e}")
+            try:
+                await send_daily_digest()
+            except Exception as e:
+                logger.error(f"Daily digest failed: {e}")
+            # Sleep in 30-second chunks so hot-reload cancellation is responsive
+            for _ in range(scrape_interval // 30):
+                await asyncio.sleep(30)
+    except asyncio.CancelledError:
+        logger.info("Background scrape loop cancelled, shutting down gracefully")
 
 
 app = rx.App()

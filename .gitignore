@@ -6,3 +6,5 @@ __pycache__/
 assets/external/
 .emails/
 .env
+frontend.zip
+backend.zip
