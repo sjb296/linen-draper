@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import reflex as rx
+import reflex_local_auth
 import sqlmodel
-from sqlalchemy import select
 
 from linen_draper.models import InterventionAlert, UserInfo
 
@@ -51,13 +51,13 @@ async def send_daily_digest():
 
     with rx.session() as session:
         alerts = list(session.exec(
-            select(InterventionAlert).order_by(
-                sqlmodel.desc(InterventionAlert.pub_date)
+            sqlmodel.select(InterventionAlert).order_by(
+                sqlmodel.desc(InterventionAlert.pub_date)  # type: ignore
             )
         ).all())
 
         users = list(session.exec(
-            select(UserInfo).where(UserInfo.email_enabled == True)
+            sqlmodel.select(UserInfo).where(UserInfo.email_enabled)  # type: ignore
         ).all())
 
         if not alerts:
@@ -70,9 +70,9 @@ async def send_daily_digest():
 
         for user_info in users:
             user = session.exec(
-                select(rx.Model).where(
-                    sqlmodel.text("localuser.id = :uid")
-                ).params(uid=user_info.user_id)
+                sqlmodel.select(reflex_local_auth.LocalUser).where(
+                    reflex_local_auth.LocalUser.id == user_info.user_id  # type: ignore
+                )
             ).first()
 
             username = getattr(user, "username", "user") if user else "user"

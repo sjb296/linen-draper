@@ -6,7 +6,6 @@ import httpx
 import feedparser
 import reflex as rx
 import sqlmodel
-from sqlalchemy import select
 
 from linen_draper.models import InterventionAlert
 
@@ -58,7 +57,7 @@ async def _scrape_rss(client: httpx.AsyncClient):
 
         with rx.session() as session:
             existing = session.exec(
-                select(InterventionAlert).where(
+                sqlmodel.select(InterventionAlert).where(
                     InterventionAlert.guid == guid
                 )
             ).first()
@@ -121,7 +120,7 @@ async def _scrape_html_pages(client: httpx.AsyncClient):
 
             with rx.session() as session:
                 existing = session.exec(
-                    select(InterventionAlert).where(
+                    sqlmodel.select(InterventionAlert).where(
                         InterventionAlert.link == link
                     )
                 ).first()
