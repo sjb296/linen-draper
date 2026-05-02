@@ -38,14 +38,14 @@ async def _scrape_rss(client: httpx.AsyncClient):
     new_count = 0
 
     for entry in feed.entries:
-        title = entry.get("title", "")
+        title = str(entry.get("title", ""))
         if not MANUAL_INTERVENTION_RE.search(title):
             continue
 
-        guid = entry.get("id", "")
-        link = entry.get("link", "")
-        description = entry.get("description", "")
-        pub_date_str = entry.get("published", "")
+        guid = str(entry.get("id", ""))
+        link = str(entry.get("link", ""))
+        description = str(entry.get("description", ""))
+        pub_date_str = str(entry.get("published", ""))
 
         pub_date = None
         if pub_date_str:

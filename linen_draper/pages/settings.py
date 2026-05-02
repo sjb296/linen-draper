@@ -5,7 +5,7 @@ from linen_draper.state.settings import SettingsState
 from linen_draper.components.navbar import navbar
 
 
-@rx.page(route="/settings", title="Settings — Linen Draper", on_load=SettingsState.on_load)
+@rx.page(route="/settings", title="Settings — Linen Draper", on_load=SettingsState.on_load)  # type: ignore[arg-type]
 @reflex_local_auth.require_login
 def settings_page() -> rx.Component:
     return rx.fragment(

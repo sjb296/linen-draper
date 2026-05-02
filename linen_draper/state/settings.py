@@ -1,4 +1,3 @@
-from typing import Optional
 
 import reflex as rx
 import sqlmodel
@@ -12,7 +11,7 @@ class SettingsState(AuthState):
     email_enabled: bool = True
     saved: bool = False
 
-    def on_load(self):
+    def on_load(self):  # type: ignore[override]
         if not self.is_authenticated:
             return
         info = self.authenticated_user_info
@@ -27,10 +26,13 @@ class SettingsState(AuthState):
         self.email = form_data.get("email", "")
         self.email_enabled = form_data.get("email_enabled", "on") == "on"
 
+        user_pk = self.authenticated_user.id
+        assert user_pk is not None  # guaranteed by is_authenticated above
+
         with rx.session() as session:
             info = session.exec(
                 sqlmodel.select(UserInfo).where(
-                    UserInfo.user_id == self.authenticated_user.id
+                    UserInfo.user_id == user_pk
                 )
             ).one_or_none()
 
@@ -38,7 +40,7 @@ class SettingsState(AuthState):
                 info = UserInfo(
                     email=self.email,
                     email_enabled=self.email_enabled,
-                    user_id=self.authenticated_user.id,
+                    user_id=user_pk,
                 )
             else:
                 info.email = self.email

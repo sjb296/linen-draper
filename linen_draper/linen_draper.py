@@ -1,18 +1,14 @@
 import asyncio
 import logging
-import os
-
-from dotenv import load_dotenv
-
-load_dotenv()
 
 import reflex as rx
 import reflex_local_auth
+from dotenv import load_dotenv
 
-from linen_draper.pages.dashboard import dashboard_page
-from linen_draper.pages.settings import settings_page
-from linen_draper.scraper import scrape_and_store
 from linen_draper.emailer import send_daily_digest
+from linen_draper.scraper import scrape_and_store
+
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

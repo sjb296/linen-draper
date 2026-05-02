@@ -5,7 +5,7 @@ from linen_draper.state.dashboard import DashboardState
 from linen_draper.components.navbar import navbar
 
 
-@rx.page(route="/", title="Linen Draper — Arch Linux Intervention Alerts", on_load=DashboardState.on_load)
+@rx.page(route="/", title="Linen Draper — Arch Linux Intervention Alerts", on_load=DashboardState.on_load)  # type: ignore[arg-type]
 @reflex_local_auth.require_login
 def dashboard_page() -> rx.Component:
     return rx.fragment(
@@ -13,7 +13,7 @@ def dashboard_page() -> rx.Component:
         rx.container(
             rx.vstack(
                 rx.cond(
-                    DashboardState.alerts.length() == 0,
+                    DashboardState.alerts.length() == 0,  # type: ignore[attr-defined]
                     rx.callout(
                         "No alerts yet. The scraper will check for Arch Linux news requiring manual intervention.",
                         icon="info",

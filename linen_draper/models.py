@@ -14,14 +14,19 @@ class InterventionAlert(rx.Model, table=True):
         sa_column=sqlmodel.Column(
             sqlmodel.DateTime(timezone=True),
             server_default=sqlmodel.func.now(),
-        )
+        ),
+        default_factory=lambda: datetime.datetime.now(datetime.timezone.utc),
     )
 
     def dict(self, *args, **kwargs) -> dict:
-        d = super().dict(*args, **kwargs)
-        d["pub_date"] = self.pub_date.isoformat()
-        d["created_at"] = self.created_at.isoformat()
-        return d
+        return {
+            "id": self.id,
+            "title": self.title,
+            "link": self.link,
+            "description": self.description,
+            "pub_date": self.pub_date.isoformat() if self.pub_date else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
 
 
 class UserInfo(rx.Model, table=True):
