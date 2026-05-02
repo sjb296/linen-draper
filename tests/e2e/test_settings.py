@@ -94,3 +94,50 @@ class TestSettingsState:
         }
         email_enabled2 = form_data2.get("email_enabled", "off") == "on"
         assert email_enabled2 is False
+
+    def test_weekly_form_data_parsing(self, db_session):
+        """Test that weekly checkbox is parsed correctly."""
+        form_data = {"weekly_enabled": "on"}
+        weekly_enabled = form_data.get("weekly_enabled", "off") == "on"
+        assert weekly_enabled is True
+
+        form_data2 = {}
+        weekly_enabled2 = form_data2.get("weekly_enabled", "off") == "on"
+        assert weekly_enabled2 is False
+
+    def test_monthly_form_data_parsing(self, db_session):
+        """Test that monthly checkbox is parsed correctly."""
+        form_data = {"monthly_enabled": "on"}
+        monthly_enabled = form_data.get("monthly_enabled", "off") == "on"
+        assert monthly_enabled is True
+
+        form_data2 = {}
+        monthly_enabled2 = form_data2.get("monthly_enabled", "off") == "on"
+        assert monthly_enabled2 is False
+
+    def test_all_channels_saved_to_db(self, db_session):
+        user = reflex_local_auth.LocalUser(
+            username="channeluser",
+            password_hash=reflex_local_auth.LocalUser.hash_password("pw"),
+            enabled=True,
+        )
+        db_session.add(user)
+        db_session.commit()
+        db_session.refresh(user)
+
+        assert user.id is not None
+
+        info = UserInfo(
+            email="channels@example.com",
+            email_enabled=True,
+            weekly_enabled=True,
+            monthly_enabled=False,
+            user_id=user.id,
+        )
+        db_session.add(info)
+        db_session.commit()
+        db_session.refresh(info)
+
+        assert info.email_enabled is True
+        assert info.weekly_enabled is True
+        assert info.monthly_enabled is False

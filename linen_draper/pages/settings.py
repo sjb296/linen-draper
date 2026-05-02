@@ -28,6 +28,16 @@ def settings_page() -> rx.Component:
                             name="email_enabled",
                             default_checked=SettingsState.email_enabled,
                         ),
+                        rx.checkbox(
+                            "Enable weekly report (Mondays, last 7 days)",
+                            name="weekly_enabled",
+                            default_checked=SettingsState.weekly_enabled,
+                        ),
+                        rx.checkbox(
+                            "Enable monthly report (1st of month, last 30 days)",
+                            name="monthly_enabled",
+                            default_checked=SettingsState.monthly_enabled,
+                        ),
                         rx.button("Save", type="submit", width="100%"),
                         rx.cond(
                             SettingsState.saved,

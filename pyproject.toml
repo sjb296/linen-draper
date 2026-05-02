@@ -22,6 +22,9 @@ reportUnusedImport = false
 reportUnusedVariable = false
 reportUnusedCallResult = false
 
+[tool.ruff]
+exclude = ["alembic/**", ".web/**", ".venv/**", "__pycache__/**"]
+
 [dependency-groups]
 dev = [
     "pyright>=1.1.409",

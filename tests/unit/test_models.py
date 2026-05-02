@@ -129,3 +129,28 @@ class TestUserInfo:
         db_session.commit()
 
         assert info.last_email_sent_at == now
+
+    def test_weekly_fields_default_false(self, db_session):
+        info = UserInfo(user_id=1)
+        assert info.weekly_enabled is False
+        assert info.last_weekly_sent_at is None
+
+    def test_monthly_fields_default_false(self, db_session):
+        info = UserInfo(user_id=1)
+        assert info.monthly_enabled is False
+        assert info.last_monthly_sent_at is None
+
+    def test_all_channels_configurable(self, db_session):
+        info = UserInfo(
+            email="multi@example.com",
+            email_enabled=True,
+            weekly_enabled=True,
+            monthly_enabled=False,
+            user_id=1,
+        )
+        db_session.add(info)
+        db_session.commit()
+
+        assert info.email_enabled is True
+        assert info.weekly_enabled is True
+        assert info.monthly_enabled is False

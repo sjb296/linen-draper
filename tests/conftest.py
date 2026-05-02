@@ -65,7 +65,8 @@ def make_user(db_engine):
     """Factory: creates a LocalUser + UserInfo, returns (user, info)."""
     counter = 0
 
-    def _make(username=None, email=None, email_enabled=True, password="secret"):
+    def _make(username=None, email=None, email_enabled=True, password="secret",
+              weekly_enabled=False, monthly_enabled=False):
         nonlocal counter
         counter += 1
         username = username or f"testuser{counter}"
@@ -85,6 +86,8 @@ def make_user(db_engine):
             info = UserInfo(
                 email=email,
                 email_enabled=email_enabled,
+                weekly_enabled=weekly_enabled,
+                monthly_enabled=monthly_enabled,
                 user_id=user.id,
             )
             session.add(info)

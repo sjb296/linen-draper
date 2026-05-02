@@ -33,4 +33,8 @@ class UserInfo(rx.Model, table=True):
     email: str = sqlmodel.Field(default="")
     email_enabled: bool = sqlmodel.Field(default=True)
     last_email_sent_at: datetime.datetime | None = sqlmodel.Field(default=None)
+    weekly_enabled: bool = sqlmodel.Field(default=False)
+    last_weekly_sent_at: datetime.datetime | None = sqlmodel.Field(default=None)
+    monthly_enabled: bool = sqlmodel.Field(default=False)
+    last_monthly_sent_at: datetime.datetime | None = sqlmodel.Field(default=None)
     user_id: int = sqlmodel.Field(foreign_key="localuser.id")
