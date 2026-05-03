@@ -10,9 +10,14 @@ Recently, I decided to totally ditch Windows on my personal hardware. I use Arti
 
 ## The stack
 
+- Language of choice: Python
 - Web framework: reflex.dev
 - Environment management: `uv`
 - Database: sqlite
-- Reverse proxy: TBD
-- Anti-scraper: TBD
+- Reverse proxy: Caddy
+- Anti-scraper: Anubis
 - VM host: Ubuntu
+
+## The outcome
+
+My £1.20/month VM with 1GB of memory, unsurprisingly, couldn't run it! Verdict: Works on my machine!™
