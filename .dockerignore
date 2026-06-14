@@ -1,0 +1,17 @@
+node_modules/
+__pycache__/
+*.py[cod]
+*.db
+*.db-journal
+.emails/
+.pytest_cache/
+.ruff_cache/
+.uv-cache/
+.states/
+.web/
+.venv/
+.env
+frontend.zip
+backend.zip
+deploy/
+tests/

@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    container_name: linen-draper
+    ports:
+      - "3000:3000"
+    volumes:
+      - linen_draper_data:/app/data
+    environment:
+      - APP_ENV=local
+      - DATABASE_URL=sqlite:///data/reflex.db
+      - API_URL=http://localhost:3000
+    restart: unless-stopped
+
+volumes:
+  linen_draper_data:

@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 import httpx
 import feedparser
@@ -68,7 +68,7 @@ async def _scrape_rss(client: httpx.AsyncClient):
                 title=title,
                 link=link,
                 description=description,
-                pub_date=pub_date or datetime.utcnow(),
+                pub_date=pub_date or datetime.now(timezone.utc),
                 guid=guid,
             )
             session.add(alert)
@@ -131,7 +131,7 @@ async def _scrape_html_pages(client: httpx.AsyncClient):
                     title=title,
                     link=link,
                     description="",
-                    pub_date=pub_date or datetime.utcnow(),
+                    pub_date=pub_date or datetime.now(timezone.utc),
                     guid=None,
                 )
                 session.add(alert)
